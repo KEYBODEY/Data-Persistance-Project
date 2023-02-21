@@ -1,11 +1,16 @@
-using System.Collections;
-using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class MainManager : MonoBehaviour
 {
+    public static MainManager Instance;
+    public string input;
+    public int record;
+    public string PlayerName;
+    public Text placeHolderText;
+
     public Brick BrickPrefab;
     public int LineCount = 6;
     public Rigidbody Ball;
@@ -17,9 +22,6 @@ public class MainManager : MonoBehaviour
     private int m_Points;
     
     private bool m_GameOver = false;
-
-    
-    // Start is called before the first frame update
     void Start()
     {
         const float step = 0.6f;
@@ -35,6 +37,91 @@ public class MainManager : MonoBehaviour
                 brick.PointValue = pointCountArray[i];
                 brick.onDestroyed.AddListener(AddPoint);
             }
+        }
+    }
+
+    [System.Serializable]
+    class SaveData
+    {
+        public string input;
+        public int record;
+        public string playerName;
+    }
+
+    public void SaveName()
+    {
+        SaveData data = new SaveData();
+        data.input = input;
+
+        string json = JsonUtility.ToJson(data);
+
+        File.WriteAllText(Application.persistentDataPath + "/savefilename.json", json);
+    }
+
+    public void SaveScore()
+    {
+        record = m_Points;
+        SaveData data = new SaveData();
+        data.record = record;
+        string json = JsonUtility.ToJson(data);
+        File.WriteAllText(Application.persistentDataPath + "/savefilepoints.json", json);
+    }
+
+    public void LoadName()
+    {
+        string path = Application.persistentDataPath + "/savefilename.json";
+        if (File.Exists(path))
+        {
+            string json = File.ReadAllText(path);
+            SaveData data = JsonUtility.FromJson<SaveData>(json);
+
+            input = data.input;
+        }
+    }
+
+    public void LoadPoints()
+    {
+        string path = Application.persistentDataPath + "/savefilepoints.json";
+        if (File.Exists(path))
+        {
+            string json = File.ReadAllText(path);
+            SaveData data = JsonUtility.FromJson<SaveData>(json);
+
+            record = data.record;
+        }
+    }
+
+    public void SavePlayerName(string name)
+    {
+        SaveData data = new SaveData();
+        data.playerName = name;
+        string jsonData = JsonUtility.ToJson(data);
+        File.WriteAllText(Application.persistentDataPath + "/playername.json", jsonData);
+    }
+
+    public void PlaceHolderName()
+    {
+        Scene currentScene = SceneManager.GetActiveScene();
+        if (currentScene.buildIndex == 0)
+        {
+            LoadName();
+            placeHolderText.GetComponent<Text>();
+            placeHolderText.text = $"{input}";
+        }
+    }
+
+    public string LoadPlayerName()
+    {
+        string filePath = Application.persistentDataPath + "/playerName.json";
+        if (File.Exists(filePath))
+        {
+            string jsonData = File.ReadAllText(filePath);
+            SaveData data = JsonUtility.FromJson<SaveData>(jsonData);
+            return data.playerName;
+        }
+        else
+        {
+            return "";
         }
     }
 
